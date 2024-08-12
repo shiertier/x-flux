@@ -226,8 +226,14 @@ def print_load_warning(missing: list[str], unexpected: list[str]) -> None:
     elif len(unexpected) > 0:
         print(f"Got {len(unexpected)} unexpected keys:\n\t" + "\n\t".join(unexpected))
 
+def get_the_path(repo_id, checkpoint_name):
+    if "/" in repo_id and repo_id[0] != "/" and repo_id.count("/") == 1:
+        return hf_hub_download(repo_id, checkpoint_name)
+    else:
+        return os.path.join(repo_id, checkpoint_name)
+
 def load_from_repo_id(repo_id, checkpoint_name):
-    ckpt_path = hf_hub_download(repo_id, checkpoint_name)
+    ckpt_path = get_the_path(repo_id, checkpoint_name)
     sd = load_sft(ckpt_path, device='cpu')
     return sd
 
@@ -241,7 +247,7 @@ def load_flow_model(name: str, device: str | torch.device = "cuda", hf_download:
         and configs[name].repo_flow is not None
         and hf_download
     ):
-        ckpt_path = hf_hub_download(configs[name].repo_id, configs[name].repo_flow)
+        ckpt_path = get_the_path(configs[name].repo_id, configs[name].repo_flow)
 
     with torch.device("meta" if ckpt_path is not None else device):
         model = Flux(configs[name].params).to(torch.bfloat16)
@@ -264,7 +270,7 @@ def load_flow_model2(name: str, device: str | torch.device = "cuda", hf_download
         and configs[name].repo_flow is not None
         and hf_download
     ):
-        ckpt_path = hf_hub_download(configs[name].repo_id, configs[name].repo_flow.replace("sft", "safetensors"))
+        ckpt_path = get_the_path(configs[name].repo_id, configs[name].repo_flow.replace("sft", "safetensors"))
 
     with torch.device("meta" if ckpt_path is not None else device):
         model = Flux(configs[name].params)
@@ -287,8 +293,8 @@ def load_flow_model_quintized(name: str, device: str | torch.device = "cuda", hf
         and configs[name].repo_flow is not None
         and hf_download
     ):
-        ckpt_path = hf_hub_download(configs[name].repo_id, configs[name].repo_flow)
-    json_path = hf_hub_download(configs[name].repo_id, 'flux_dev_quantization_map.json')
+        ckpt_path = get_the_path(configs[name].repo_id, configs[name].repo_flow)
+    json_path = get_the_path(configs[name].repo_id, 'flux_dev_quantization_map.json')
 
 
     model = Flux(configs[name].params).to(torch.bfloat16)
@@ -326,7 +332,7 @@ def load_ae(name: str, device: str | torch.device = "cuda", hf_download: bool = 
         and configs[name].repo_ae is not None
         and hf_download
     ):
-        ckpt_path = hf_hub_download(configs[name].repo_id_ae, configs[name].repo_ae)
+        ckpt_path = get_the_path(configs[name].repo_id_ae, configs[name].repo_ae)
 
     # Loading the autoencoder
     print("Init AE")
